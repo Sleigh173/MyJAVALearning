@@ -1,0 +1,53 @@
+import java.util.Arrays;
+
+public class QuickSort {
+
+	public static void main(String[] args) {
+		int[] arr = new int[] {8, 9, 1, 7, 2, 3, 5, 4, 6, 0};
+		quickSort(arr, 0, 9);
+		System.out.println(Arrays.toString(arr));
+	}
+  
+  //快排操作
+	public static int[] quickSort(int[] array, int left, int right) {
+    
+		if(array.length == 1 || left < 0 || right >= array.length || left >= right) {
+			return array;
+		}
+		
+    //基准取左边
+		int povit = left;
+		int lleft = left;
+		int rright = right;
+		
+    //从右往左先开始，结束时left = right
+		while(left < right) {
+			while(array[right] >= array[povit] && left < right) {
+				right--;
+			}
+			while(array[left] <= array[povit] && left < right) {
+				left++;
+			}
+			if(left < right) {
+				swap(array, left, right);
+			}	
+		}
+		swap(array, povit, right);
+		
+    //递归处理分区
+		int lright = right - 1;
+		quickSort(array, lleft, lright);
+		int rleft = left + 1;
+		quickSort(array, rleft, rright);
+		
+		return array;
+	}
+  
+  //交换数组元素
+	public static void swap(int[] array, int i, int j) {
+		int temp = array[i];
+		array[i] = array[j];
+		array[j] = temp;
+	}
+
+}
