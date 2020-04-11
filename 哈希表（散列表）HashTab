@@ -1,0 +1,224 @@
+package hashtab;
+
+import java.util.Scanner;
+
+public class HashTabDemo {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		HashTab hashTab = new HashTab(7);
+		//写一个简单的菜单
+		String key = "";
+		Scanner scanner = new Scanner(System.in);
+		while(true) {
+			System.out.println("add:  添加雇员");
+			System.out.println("list: 显示雇员");
+			System.out.println("find: 查找雇员");
+			System.out.println("exit: 退出系统");
+			System.out.println("addB: 按照顺序添加雇员");
+			
+			key = scanner.next();
+			switch (key) {
+			case "add":
+				System.out.println("请输入id");
+				int id = scanner.nextInt();
+				System.out.println("请输入name");
+				String name = scanner.next();
+				Emp emp = new Emp(id, name);
+				hashTab.add(emp);
+				break;
+			case "list":
+				hashTab.list();
+				break;
+			case "find":
+				System.out.println("请输入要查找的雇员编号");
+				int id1 = scanner.nextInt();
+				hashTab.findEmpById(id1);
+				break;
+			case "addB":
+				System.out.println("请输入id");
+				int id11 = scanner.nextInt();
+				System.out.println("请输入name");
+				String name1 = scanner.next();
+				Emp emp1 = new Emp(id11, name1);
+				hashTab.addByOrder(emp1);
+				break;
+			case "exit":
+				scanner.close();
+				System.exit(0);
+				break;
+			default:
+				break;
+			}
+		}
+		
+	}
+	
+}
+
+//创建哈希表hashtab，管理多条链表
+class HashTab{
+	private EmpLinkedList[] empLinkedListArray;
+	private int size;//共有多少条链表
+	
+	//构造器
+	public HashTab(int size) {
+		//初始化雇员链表数组
+		empLinkedListArray = new EmpLinkedList[size];
+		this.size = size;
+		//坑？数组没有和链表关联起来
+		for(int i = 0; i < size; i++) {
+			empLinkedListArray[i] = new EmpLinkedList();
+		}
+	}
+	
+	// 添加雇员
+	public void add(Emp emp) {
+		// 根据员工的id找到该雇员应该添加到哪条链表
+		int empLinkedListNO = hashFun(emp.id);
+		empLinkedListArray[empLinkedListNO].add(emp);
+	}
+	
+	//遍历雇员
+	public void list() {
+		for (int i = 0; i < empLinkedListArray.length; i++) {
+			empLinkedListArray[i].list(i);
+		}
+	}
+	
+	//根据id查找雇员
+	public void findEmpById(int id) {
+		int empLinkedListNO = hashFun(id);
+		//System.out.println(empLinkedListArray[empLinkedListNO].findEmpById(id).name);//这样的表述有问题，因为会造成空指针异常
+		Emp emp = empLinkedListArray[empLinkedListNO].findEmpById(id);
+		if(emp != null) {
+			System.out.println(emp.name);
+		}else {
+			System.out.println("查无此人");
+		}
+	}
+	
+	//按照id顺序添加雇员
+	public void addByOrder(Emp emp) {
+		int empLinkedListNO = hashFun(emp.id);
+		empLinkedListArray[empLinkedListNO].addByOrder(emp);
+	}
+
+	// 编写一个散列函数，使用简单的取模法
+	public int hashFun(int id) {
+		return id % size;
+	}
+}
+
+//表示一个雇员
+class Emp{
+	public int id;
+	public String name;
+	public Emp next;//next默认为null
+	public Emp(int id, String name) {
+		super();
+		this.id = id;
+		this.name = name;
+	}
+}
+
+//创建一个链表EmpLinkedList
+class EmpLinkedList{
+	//头指针指向第一个Emp，因此我们这个链表的head是有效的，直接指向第一个雇员
+	private Emp head;//默认为null
+	
+	//添加雇员到链表
+	//添加雇员的时候直接加在链表的最后，id是自增长的，即id的分配总是从小到大
+	//因此我们将该雇员直接加入到本链表的最后即可
+	public void add(Emp emp) {
+		//如果是添加第一个雇员
+		if(head == null) {
+			head = emp;
+			return;
+		}
+		
+		//如果不是第一个雇员，那么要找到链表的末尾
+		//head不能动，所以用temp辅助找到最后节点
+		Emp temp = head;
+		while(temp.next != null) {
+			temp = temp.next;	
+		}//退出循环时已经找到了最后节点就是temp，它的下一个就是null
+		temp.next = emp;
+		return;
+	}
+	
+	// 添加雇员到链表
+	// 添加雇员的时候按照id的大小顺序添加到合适的位置
+	public void addByOrder(Emp emp) {
+		// 如果是添加第一个雇员
+		if (head == null) {
+			head = emp;
+			return;
+		}
+
+		// 如果不是第一个雇员，那么要找到该雇员合适的位置
+		// head不能动，所以用temp辅助找到合适位置
+		// 首先，检查head节点和该插入节点的关系
+		Emp temp = head;
+		if(emp.id < head.id) {//emp节点在头节点之前
+			head = emp;
+			emp.next = temp;
+		}else if(emp.id == head.id) {
+			System.out.println("该雇员已存在，请勿重复添加");
+			return;
+		}else {//emp节点在头节点之后
+			if(temp.next != null) {//头节点之后还有节点
+				while(temp.next != null) {
+					if(temp.next.id > emp.id) {//说明找到了，就在temp后面插入
+						emp.next = temp.next;
+						temp.next = emp;
+						return;
+					}
+					if (temp.next.id == emp.id) {// 说明已经存在这个节点了
+						System.out.println("该雇员已存在，请勿重复添加");
+						return;
+					}
+				}
+			}else {//头节点之后没有节点
+				temp.next = emp;
+			}
+		}
+	}
+	
+	//遍历链表的雇员信息
+	public void list(int i) {
+		if(head == null) {//链表为空
+			System.out.println("第" + i + "条链表为空");
+			return;
+		}
+		System.out.print("第" + i + "条链表的信息为：");
+		Emp temp = head;
+		while(temp != null) {
+			System.out.printf("=> id = %d name = %s", temp.id, temp.name);
+			temp = temp.next;
+		}
+		System.out.println();
+		return;
+	}
+	
+	//根据id查找雇员
+	//查找到返回Emp，没找到返回null
+	public Emp findEmpById(int id) {
+		if(head == null) {
+			System.out.println("链表空");
+			return null;
+		}
+		Emp temp = head;
+		while(true) {
+			if(temp.id == id) {
+				break;
+			}
+			if(temp.next == null) {
+				temp = null;
+				break;
+			}
+			temp = temp.next;
+		}
+		return temp;
+	}
+}
